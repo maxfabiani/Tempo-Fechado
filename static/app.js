@@ -802,6 +802,74 @@ async function _carregarAnotacoes(ids) {
   } catch (_) {}
 }
 
+let _editorAberto = null;
+
+function abrirEditorAnotacao(el) {
+  if (_editorAberto) fecharEditorAnotacao();
+  const id = el.dataset.anotacaoId;
+  const tr = el.closest("tr");
+  if (!tr) return;
+  const textoAtual = (window._anotacoesCache?.[id] || "") + "";
+
+  const editorTr = document.createElement("tr");
+  editorTr.className = "anotacao-editor-row";
+  editorTr.innerHTML = `
+    <td colspan="99">
+      <div class="anotacao-editor-wrap">
+        <textarea placeholder="Digite sua anotação...">${escapeHtml(textoAtual)}</textarea>
+        <div class="anotacao-editor-actions">
+          <button class="btn" onclick="fecharEditorAnotacao()">Cancelar</button>
+          <button class="btn" onclick="salvarEditorAnotacao()">💾 Salvar</button>
+        </div>
+      </div>
+    </td>`;
+  tr.parentNode.insertBefore(editorTr, tr.nextSibling);
+
+  const ta = editorTr.querySelector("textarea");
+  ta.focus();
+  ta.setSelectionRange(ta.value.length, ta.value.length);
+
+  _editorAberto = { id, tr, editorTr, el };
+  ta.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") { fecharEditorAnotacao(); e.preventDefault(); }
+    if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) { salvarEditorAnotacao(); e.preventDefault(); }
+  });
+}
+
+function fecharEditorAnotacao() {
+  if (_editorAberto) {
+    _editorAberto.editorTr.remove();
+    _editorAberto = null;
+  }
+}
+
+async function salvarEditorAnotacao() {
+  if (!_editorAberto) return;
+  const { id, el } = _editorAberto;
+  const textarea = _editorAberto.editorTr.querySelector("textarea");
+  const texto = textarea ? textarea.value.trim() : "";
+
+  try {
+    const resp = await fetch("/api/anotacoes", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, anotacao: texto }),
+    });
+    const json = await resp.json();
+    if (json.ok) {
+      window._anotacoesCache = window._anotacoesCache || {};
+      window._anotacoesCache[id] = texto;
+      el.classList.remove("no-text");
+      el.classList.add("has-text");
+      fecharEditorAnotacao();
+    } else {
+      alert("Erro ao salvar anotacao: " + (json.erro || "desconhecido"));
+    }
+  } catch (e) {
+    alert("Erro de rede ao salvar anotacao.");
+  }
+}
+
 function setPaginaDashboard() {
   ocultarDashboardExecutivoPremium();
   ajustarFiltroTipoInconsistencias();
