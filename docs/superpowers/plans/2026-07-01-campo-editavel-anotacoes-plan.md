@@ -30,13 +30,8 @@
 Insert these helpers:
 
 ```python
-import hashlib
-
-ARQUIVO_ANOTACOES_DB = _base_ponto_pdfs_v81737() / "config" / "anotacoes.db"
-
-
 def _init_anotacoes_db() -> sqlite3.Connection:
-    db_path = ARQUIVO_ANOTACOES_DB
+    db_path = Path.home() / "ponto_pdfs" / "config" / "anotacoes.db"
     db_path.parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(str(db_path))
     conn.row_factory = sqlite3.Row
@@ -97,7 +92,7 @@ def api_post_anotacoes():
     if not id_:
         return jsonify({"erro": "ID obrigatório"}), 400
 
-    usuario = sessao_usuario().get("usuario", "")
+    usuario = autenticar_requisicao_atual()[0].get("usuario", "")
     agora = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     conn = _init_anotacoes_db()

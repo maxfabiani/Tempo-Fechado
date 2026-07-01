@@ -52,7 +52,7 @@ except Exception:
     USUARIOS_LEGADO = None
 
 
-# v8.17.20 - valida/cria estrutura operacional do ponto_pdfs
+# v8.17.20 
 def garantir_estrutura_ponto_pdfs_v81720():
     try:
         from pathlib import Path
@@ -74,7 +74,7 @@ app.config["SESSION_COOKIE_HTTPONLY"] = True
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 app.config["MAX_CONTENT_LENGTH"] = 250 * 1024 * 1024
 
-# v8.21.38 - Administracao permite excluir usuarios com protecoes operacionais.
+# v8.21.38 
 APP_VERSION = "v8.21.38"
 APP_RELEASE_NAME = "Upload Manual PDFs"
 APP_FULL_NAME = "Tempo Fechado v8.21.38 - Upload Manual PDFs"
@@ -82,8 +82,7 @@ APP_STARTED_AT = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 APP_BASE_DIR = str(Path(__file__).resolve().parent)
 
 
-# v8.12.02 - Compressao leve de respostas textuais/JSON.
-# Reduz trafego e deixa tabelas grandes mais ageis sem alterar regras de negocio.
+# v8.12.02 
 @app.after_request
 def aplicar_gzip_respostas(response):
     try:
@@ -145,8 +144,7 @@ ARQUIVO_CACHE_BH2_CALCULO = DATA_DIR / "banco_horas_2_calculo_cache.json"
 _CACHE_BH2_CALCULO_MEM = {"key": None, "payload": None, "gerado_em_ts": 0}
 _CACHE_SCORE_OPERACIONAL_MEM = {"key": None, "payload": None, "gerado_em_ts": 0.0}
 
-# v8.10.43 - Estado do processamento assíncrono da correção do Banco de Horas
-# Evita deixar o navegador esperando vários minutos e cair em "Failed to fetch".
+# v8.10.43 
 BH_CORRECAO_LOCK = threading.Lock()
 BH_CORRECAO_JOB = {
     "status": "ocioso",
@@ -160,9 +158,7 @@ BH_CORRECAO_JOB = {
 
 
 
-# v8.11.12 - Recuperação do cache/lógica de PDFs do Banco de Horas.
-# O processamento chama o launcher e importa o Excel, sem tocar automaticamente
-# no núcleo sensível de Banco de Horas / Extrato.
+# v8.11.12 
 ARQUIVO_LOG_PROCESSAMENTO_INTEGRADO = DATA_DIR / "processamento_integrado.log"
 ARQUIVO_HISTORICO_OPERACAO_V8190 = DATA_DIR / "historico_operacao.jsonl"
 ARQUIVO_PAINEL_IMPLANTACAO_V8210 = DATA_DIR / "painel_implantacao_notebooks.json"
@@ -179,8 +175,7 @@ PROCESSAMENTO_INTEGRADO_JOB = {
     "log_tail": "",
 }
 
-# v8.10.45 - cache em memória para evitar reler e normalizar o catálogo JSON
-# dezenas de vezes dentro de uma mesma requisição/tela.
+# v8.10.45 
 _CACHE_PDFS_MEM = {"mtime": None, "payload": None}
 
 # v8.10.57 - cache em memória da base Consolidado.

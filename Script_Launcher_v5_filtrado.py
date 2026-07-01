@@ -209,12 +209,7 @@ def normalizar_assunto_v81735(valor: str) -> str:
 
 
 def assunto_compativel_v81734(assunto: str) -> bool:
-    """v8.17.36: aceita somente a família 'Análise de controle de marcação/marcações'.
-
-    A regra exige:
-    - controle
-    - raiz marcac, que cobre marcacao e marcacoes
-    """
+   
     assunto_norm = normalizar_assunto_v81735(assunto)
     filtro_norm = normalizar_assunto_v81735(ASSUNTO_FILTRO)
     if filtro_norm and filtro_norm not in {
@@ -290,9 +285,7 @@ def baixar_anexos_outlook() -> int:
 
             logger.info(f"Analisando #{total_analisados}: unread={unread} | remetente={remetente} | assunto={assunto}")
 
-            # v8.17.43: politica configuravel pela Administracao do Robo.
-            # Padrao seguro: baixar PDFs apenas de e-mails NAO LIDOS.
-            # Quando habilitado, permite incluir e-mails lidos recentes.
+         
             if not unread and not CAPTURAR_EMAILS_LIDOS_V81743:
                 logger.info("  -> ignorado: e-mail ja lido. Politica atual captura somente nao lidos.")
                 continue

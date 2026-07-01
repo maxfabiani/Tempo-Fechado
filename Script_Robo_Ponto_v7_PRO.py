@@ -98,7 +98,6 @@ class Config:
 
 CONFIG = Config()
 
-# v8.17.27 - Configuração de e-mail do robô fora do código-fonte.
 CONFIG_EMAIL_ROBO_JSON_V81727 = Path.home() / "ponto_pdfs" / "config" / "config_email_robo.json"
 
 def _lista_emails_v81727(valor):
@@ -426,13 +425,7 @@ def converter_saldo_para_decimal(valor):
 
 
 def saldo_banco_para_minutos(valor):
-    """
-    Converte saldo do banco de horas para minutos.
-
-    Importante:
-    No PDF, valores como "-41,29" representam -41 horas e 29 minutos,
-    e não número decimal.
-    """
+   
     valor = str(valor).strip()
     if not valor or valor.lower() == "nan":
         return None
@@ -449,10 +442,7 @@ def saldo_banco_para_minutos(valor):
 
 
 def minutos_para_saldo_banco(total_minutos):
-    """
-    Formata minutos como saldo no mesmo padrão do PDF: HH,MM.
-    Ex.: -2489 minutos -> "-41,29".
-    """
+    
     if total_minutos is None:
         return ""
 
@@ -589,13 +579,7 @@ def agrupar_paginas_por_colaborador(caminho_pdf):
 
 
 def extrair_data_emissao_pdf(texto_completo):
-    """Extrai a data de Emissão do espelho de ponto.
-
-    Essa data é a âncora correta para o Saldo Atual informado no quadro
-    Banco de Horas: o saldo deve aparecer somente na linha cuja Data seja
-    igual à Emissão do PDF. Assim evitamos repetir/sobrescrever o mesmo
-    saldo em todos os dias do período.
-    """
+   
     if not texto_completo:
         return ""
     m = re.search(r"Emiss(?:ã|a)o:\s*(\d{2}/\d{2}/\d{4})", str(texto_completo), flags=re.IGNORECASE)
@@ -603,22 +587,7 @@ def extrair_data_emissao_pdf(texto_completo):
 
 
 def extrair_resumo_banco_horas(texto_completo):
-    """
-    Extrai a linha-resumo do banco de horas do PDF.
-
-    Retorno:
-    {
-        "Saldo Anterior": "-33,38",
-        "Débito": "8,48",
-        "Crédito": "0,57",
-        "Saldo Atual": "-41,29",
-    }
-
-    Observação:
-    O PDF traz esta informação como resumo do período. Para montar a evolução
-    diária, o robô usa o Saldo Anterior como ponto de partida e aplica,
-    linha a linha, H.E. como crédito e Absent. como débito.
-    """
+   
     linhas = [linha.strip() for linha in texto_completo.split("\n") if linha.strip()]
     resumo = {
         "Saldo Anterior": "",
@@ -641,22 +610,13 @@ def extrair_resumo_banco_horas(texto_completo):
 
 
 def extrair_saldo_atual(texto_completo):
-    # Mantida para compatibilidade com versões anteriores.
+    
     return extrair_resumo_banco_horas(texto_completo).get("Saldo Atual", "")
 
 
 
 def calcular_saldo_atual_pdf_apurado(saldo_anterior_pdf, debito_pdf, credito_pdf, saldo_atual_pdf=""):
-    """
-    Apura o Saldo Atual a partir do resumo do Banco de Horas do PDF.
-
-    Fórmula operacional:
-        Saldo Atual = Saldo Anterior - Débito + Crédito
-
-    O valor calculado é formatado no mesmo padrão do PDF (HH,MM). Quando algum
-    campo essencial não puder ser convertido, usa o Saldo Atual informado no
-    próprio PDF como fallback seguro.
-    """
+    
     saldo_anterior_min = saldo_banco_para_minutos(saldo_anterior_pdf)
     if saldo_anterior_min is None:
         return str(saldo_atual_pdf or "").strip()
@@ -673,18 +633,8 @@ def calcular_saldo_atual_pdf_apurado(saldo_anterior_pdf, debito_pdf, credito_pdf
     return minutos_para_saldo_banco(saldo_atual_min)
 
 
-
 def obter_chave_ciclo_medicao(data_valor):
-    """
-    Retorna a chave do ciclo de medição para uma data.
-
-    Regra de negócio:
-    - Ciclo começa no dia 15 do mês em curso.
-    - Ciclo termina no dia 14 do mês seguinte.
-
-    Exemplo:
-    - 15/05/2026 a 14/06/2026 => ciclo 2026-05-15.
-    """
+   
     try:
         data = pd.to_datetime(str(data_valor).strip(), format="%d/%m/%Y", errors="coerce")
     except Exception:
@@ -709,14 +659,7 @@ def obter_chave_ciclo_medicao(data_valor):
 
 
 def linha_neutra_banco_horas(linha):
-    """
-    Identifica datas/observações que não devem movimentar o Saldo Calculado.
-
-    Exceções informadas:
-    - DSR
-    - Feriados
-    - Compensado
-    """
+   
     observacao = normalizar_texto(linha.get("Observação", ""))
     data_txt = str(linha.get("Data", "") or "").strip()
 
@@ -744,7 +687,7 @@ def linha_neutra_banco_horas(linha):
 
 
 def _primeiro_saldo_valido(valores):
-    """Retorna o primeiro saldo convertível em minutos dentro de uma lista/série."""
+    
     for valor in valores:
         texto = str(valor or "").strip()
         if not texto or texto.lower() == "nan":
@@ -756,12 +699,7 @@ def _primeiro_saldo_valido(valores):
 
 
 def _primeiro_tempo_minutos(valores):
-    """
-    Retorna o primeiro tempo HH:MM válido.
-
-    Importante para evitar dupla contagem quando o mesmo dia aparece em mais
-    de uma fotografia/PDF do colaborador dentro do mesmo ciclo.
-    """
+    
     for valor in valores:
         minutos = hhmm_para_minutos(valor)
         if minutos is not None:
@@ -770,7 +708,7 @@ def _primeiro_tempo_minutos(valores):
 
 
 def _primeiro_tempo_linha(linha, colunas):
-    """Retorna o primeiro tempo válido nas colunas informadas da linha."""
+   
     for coluna in colunas:
         minutos = hhmm_para_minutos(linha.get(coluna, ""))
         if minutos is not None:
@@ -779,7 +717,7 @@ def _primeiro_tempo_linha(linha, colunas):
 
 
 def observacao_indica_banco_horas(linha):
-    """Identifica linhas em que a ausência deve debitar o banco de horas."""
+   
     observacao = normalizar_texto(linha.get("Observação", ""))
     return (
         "BANCO DE HORAS" in observacao
@@ -795,15 +733,7 @@ def observacao_indica_ausencia(linha):
 
 
 def movimento_banco_horas_linha(linha):
-    """
-    Calcula o movimento de uma linha para o Saldo Calculado.
-
-    Regra-chave:
-    - Em linhas de Banco de Horas, o tempo deve ser DÉBITO, mesmo que o PDF
-      ou o parser tenha posicionado esse tempo em H.E. por proximidade visual.
-    - DSR, Feriado e Compensado são neutros e tratados antes desta função.
-    - Em linhas normais, H.E. soma e Absent. subtrai.
-    """
+    
     if linha_neutra_banco_horas(linha):
         return 0, 0
 
@@ -821,10 +751,7 @@ def movimento_banco_horas_linha(linha):
 
 
 def movimento_banco_horas_do_dia(linhas_data):
-    """
-    Soma o movimento único do dia, evitando duplicidade quando a mesma data
-    aparece em mais de um PDF/fotografia do mesmo colaborador.
-    """
+    
     vistos = set()
     credito_total = 0
     debito_total = 0
@@ -853,46 +780,19 @@ def movimento_banco_horas_do_dia(linhas_data):
 
 
 def aplicar_saldo_calculado_por_ciclo(linhas_tabela, resumo_banco):
-    """
-    Compatibilidade local da extração.
-
-    O cálculo definitivo do Saldo Calculado é feito de forma GLOBAL no
-    dataframe, depois que todos os PDFs foram lidos, pela função
-    recalcular_saldo_por_competencia().
-
-    Motivo:
-    quando existem várias fotografias/PDFs do mesmo colaborador no mesmo
-    ciclo, calcular dentro de cada PDF reinicia o saldo e pode gerar saltos
-    indevidos. Aqui apenas garantimos que a coluna exista.
-    """
+   
     for linha in linhas_tabela:
         linha.setdefault("Saldo Calculado", "")
     return linhas_tabela
 
 def aplicar_evolucao_banco_horas(linhas_tabela, resumo_banco, data_emissao_pdf=""):
-    """
-    V8.11.19 - Saldo Calculado abre pelo Saldo Atual do fechamento anterior.
-
-    Regra correta para o Excel:
-    - O quadro Banco de Horas do PDF traz Saldo Anterior, Débito, Crédito e
-      Saldo Atual.
-    - Saldo Anterior PDF, Debito PDF, Credito PDF e Saldo Atual são
-      informações do próprio resumo do PDF e ficam preenchidas em todas as
-      linhas daquele colaborador/PDF.
-    - Saldo Informado PDF permanece como fotografia da Data de Emissão: só é
-      preenchido na linha cuja Data seja igual à Data de Emissão do PDF.
-    - Saldo Calculado é uma coluna independente, calculada por ciclo de
-      medição a partir do Saldo Anterior PDF + H.E. - Absent., com exceções
-      para DSR, Feriado e Compensado.
-    """
+    
     saldo_anterior_pdf = str(resumo_banco.get("Saldo Anterior", "") or "").strip()
     debito_pdf = str(resumo_banco.get("Débito", "") or "").strip()
     credito_pdf = str(resumo_banco.get("Crédito", "") or "").strip()
     saldo_atual_pdf_original = str(resumo_banco.get("Saldo Atual", "") or "").strip()
 
-    # Mantido como fallback defensivo: a coluna Saldo Atual deve refletir o
-    # campo Saldo Atual do PDF. Se o campo vier vazio/ilegível, usamos a
-    # apuração pelos componentes do próprio PDF.
+   
     saldo_atual_pdf = saldo_atual_pdf_original or calcular_saldo_atual_pdf_apurado(
         saldo_anterior_pdf,
         debito_pdf,
@@ -913,12 +813,10 @@ def aplicar_evolucao_banco_horas(linhas_tabela, resumo_banco, data_emissao_pdf="
         nova["Debito PDF"] = debito_pdf
         nova["Credito PDF"] = credito_pdf
 
-        # Mesma lógica do Saldo Anterior PDF: o Saldo Atual informado no PDF
-        # acompanha todas as linhas daquele colaborador/PDF.
+        
         nova["Saldo Atual"] = saldo_atual_pdf
 
-        # Fotografia pontual da emissão, para o Tempo Fechado diferenciar o
-        # saldo informado daquele dia do saldo-resumo repetido no Excel.
+       
         nova["Saldo Informado PDF"] = saldo_atual_pdf if preencher_fotografia_nesta_linha else ""
 
         resultado.append(nova)
@@ -1354,7 +1252,7 @@ def preparar_dataframe_consultas(registros):
 
 
 def chave_colaborador_dataframe(row):
-    """Chave estável para consolidação operacional por colaborador."""
+   
     matricula = str(row.get("Matrícula", "") or "").strip()
     nome = normalizar_texto(row.get("Nome", ""))
     cc = limpar_cc(row.get("cc", row.get("CC", "")))
@@ -1364,7 +1262,7 @@ def chave_colaborador_dataframe(row):
 
 
 def atualizar_campos_derivados_dataframe(df):
-    """Recalcula colunas auxiliares após consolidação ou ajuste de saldo."""
+   
     if df is None or df.empty:
         return df
     df = df.copy()
@@ -1388,14 +1286,7 @@ def atualizar_campos_derivados_dataframe(df):
 
 
 def consolidar_consolidado_oficial(df_historico):
-    """
-    Cria a visão operacional oficial: uma linha por colaborador + data.
-
-    Mantém a fotografia mais recente por Data Emissão PDF, preservando a base
-    completa em "Consolidado Historico" para auditoria. Essa separação evita
-    que múltiplos PDFs/snapshots do mesmo dia inflem Hora Extra, Ausência e
-    Banco de Horas nas guias operacionais do Tempo Fechado.
-    """
+    
     if df_historico is None or df_historico.empty:
         return df_historico
 
@@ -1408,8 +1299,7 @@ def consolidar_consolidado_oficial(df_historico):
     df["_data_dt_oficial"] = pd.to_datetime(df["Data"].astype(str).str.strip(), format="%d/%m/%Y", errors="coerce")
     df["_emissao_dt_oficial"] = pd.to_datetime(df["Data Emissão PDF"].astype(str).str.strip(), format="%d/%m/%Y", errors="coerce")
 
-    # Ordena de modo que tail(1) retenha a fotografia mais recente; em empate,
-    # mantém a última ocorrência lida, preservando correções posteriores no lote.
+   
     df = df.sort_values(
         by=["_chave_colab_oficial", "_data_dt_oficial", "_emissao_dt_oficial", "Arquivo Origem"],
         na_position="first",
@@ -1426,8 +1316,7 @@ def consolidar_consolidado_oficial(df_historico):
         errors="ignore",
     )
 
-    # Recalcula o Saldo Calculado sobre a visão oficial para que o saldo seja
-    # coerente com a única fotografia operacional de cada dia.
+ 
     df_oficial = recalcular_saldo_por_competencia(df_oficial)
     df_oficial = atualizar_campos_derivados_dataframe(df_oficial)
     df_oficial = aplicar_validacoes(df_oficial)
@@ -1436,14 +1325,7 @@ def consolidar_consolidado_oficial(df_historico):
 
 
 def montar_saldos_disponiveis_bh(df_historico, df_oficial=None):
-    """
-    Monta a matéria-prima da nova arquitetura Banco de Horas 2.0.
-
-    Esta aba não define o saldo oficial. Ela lista os saldos encontrados nos
-    PDFs/Excel para que o gestor escolha, no Tempo Fechado, o saldo inicial
-    por colaborador e por data-base. Também permite comparação entre a visão
-    operacional (Consolidado) e a visão de auditoria (Consolidado Historico).
-    """
+    
     colunas_saida = [
         "Visao Origem", "Matrícula", "Nome", "CC", "Função", "Turno",
         "Data", "Data Emissão PDF", "Origem Saldo", "Saldo Disponível",
@@ -1543,7 +1425,7 @@ def montar_saldos_disponiveis_bh(df_historico, df_oficial=None):
 
 
 def ordenar_colunas_para_exportacao(df):
-    """Padroniza a ordem das colunas principais e preserva colunas auxiliares."""
+   
     df_export = df.copy()
     if "cc" in df_export.columns:
         df_export["cc"] = df_export["cc"].apply(limpar_cc)
@@ -1561,7 +1443,7 @@ def ordenar_colunas_para_exportacao(df):
 
 
 def _data_fechamento_ciclo_anterior(ciclo):
-    """Retorna dd/mm/aaaa do fechamento anterior a uma chave de ciclo yyyy-mm-15."""
+    
     try:
         inicio = pd.to_datetime(str(ciclo).strip(), format="%Y-%m-%d", errors="coerce")
     except Exception:
@@ -1573,13 +1455,7 @@ def _data_fechamento_ciclo_anterior(ciclo):
 
 
 def _saldo_abertura_ciclo_por_fechamento(sub_colab, ciclo):
-    """
-    Busca o saldo de abertura do ciclo pelo Saldo Atual do fechamento anterior.
-
-    Exemplo: para o ciclo 15/05 a 14/06, procura a linha 14/05 do mesmo
-    colaborador e usa a coluna Saldo Atual. Esse é o ponto de partida correto
-    para o Saldo Calculado.
-    """
+   
     data_fechamento = _data_fechamento_ciclo_anterior(ciclo)
     if not data_fechamento or sub_colab is None or sub_colab.empty:
         return "", None
@@ -1613,25 +1489,7 @@ def _saldo_abertura_ciclo_por_fechamento(sub_colab, ciclo):
     return "", None
 
 def recalcular_saldo_por_competencia(df):
-    """
-    Calcula a coluna Saldo Calculado de forma global, por colaborador e ciclo.
-
-    Regras aplicadas:
-    1. O ciclo de medição vai do dia 15 ao dia 14 do mês seguinte.
-    2. A base de abertura do ciclo é o Saldo Atual do fechamento do ciclo
-       anterior, isto é, a linha do dia 14 imediatamente anterior ao início
-       do ciclo. Ex.: ciclo 15/05 a 14/06 usa o Saldo Atual de 14/05.
-    3. Se a linha de fechamento anterior não existir no lote, usa Saldo
-       Anterior PDF como fallback operacional.
-    4. O saldo evolui dia a dia por H.E. como crédito e Absent. como débito.
-    5. Linhas com Observação = Banco de Horas debitam o saldo, usando
-       Absent./Jornada/H.E./Abono como fallback de tempo, nesta ordem.
-    6. DSR, Feriados e Compensado não movimentam o saldo.
-    7. O cálculo NÃO usa Saldo Atual do PDF como base intermediária depois da
-       abertura do ciclo.
-    8. Se a mesma data aparecer mais de uma vez por causa de fotografias/PDFs
-       repetidos, o movimento daquele dia é considerado uma única vez.
-    """
+   
     if df is None or df.empty:
         return df
 
@@ -1655,8 +1513,7 @@ def recalcular_saldo_por_competencia(df):
 
     df["_chave_colab_calc"] = df.apply(chave_colab, axis=1)
 
-    # Mantém memória do saldo final por colaborador entre ciclos processados,
-    # apenas como fallback quando algum ciclo não trouxer Saldo Anterior PDF.
+ 
     saldo_final_anterior_por_colab = {}
 
     for chave, idx_colab in df.groupby("_chave_colab_calc", sort=False).groups.items():
@@ -1677,16 +1534,14 @@ def recalcular_saldo_por_competencia(df):
                 kind="mergesort",
             )
 
-            # Regra principal: o Saldo Calculado abre o ciclo com o
-            # Saldo Atual do fechamento do ciclo anterior (dia 14).
+           
             saldo_txt, saldo_corrente = _saldo_abertura_ciclo_por_fechamento(sub_colab, ciclo)
 
-            # Fallback 1: se o lote não tiver a linha do dia 14 anterior, usa
-            # o Saldo Anterior PDF do próprio ciclo.
+            
             if saldo_corrente is None:
                 saldo_txt, saldo_corrente = _primeiro_saldo_valido(grupo.get("Saldo Anterior PDF", []))
 
-            # Fallback 2: mantém continuidade entre ciclos processados no lote.
+           
             if saldo_corrente is None:
                 saldo_corrente = saldo_final_anterior_por_colab.get(chave, 0)
 
@@ -1941,19 +1796,7 @@ def montar_controle_operacional_por_data(df):
 
 
 def montar_dashboard_banco_horas_he(df):
-    """
-    Monta o dashboard executivo por colaborador.
-
-    Conteúdo:
-    - Saldo atual/final do banco de horas no período processado.
-    - Horas extras realizadas no período por colaborador.
-    - Absenteísmo/débitos no período.
-    - Saldo inicial estimado e variação líquida.
-
-    Observação:
-    O saldo final usa o último registro cronológico de cada colaborador,
-    respeitando a evolução por competência calculada na extração do PDF.
-    """
+    
     colunas = [
         "Nome", "CC", "Função", "Turno", "Primeira Data", "Última Data",
         "Dias no Período", "Dias com HE", "HE Período", "HE Período Min",
@@ -1969,7 +1812,7 @@ def montar_dashboard_banco_horas_he(df):
     base["Absent. Min"] = base.get("Absent. Min", base["Absent."].apply(hhmm_para_minutos)).fillna(0)
     base["Saldo Atual Min"] = base["Saldo Atual"].apply(hhmm_para_minutos)
 
-    # Ordenação garante que o último saldo seja realmente o saldo do fim do período.
+   
     base = base.sort_values(["Nome", "Matrícula", "Data_dt"])
 
     linhas = []
@@ -2041,7 +1884,7 @@ def escrever_dashboard_banco_horas_he(writer, df_dashboard):
     if df_export.empty:
         return
 
-    # Filtros e congelamento
+   
     ws.freeze_panes = "A2"
     ws.auto_filter.ref = ws.dimensions
 
@@ -2059,7 +1902,7 @@ def escrever_dashboard_banco_horas_he(writer, df_dashboard):
         elif status == "Zerado":
             ws.cell(row=row_idx, column=status_col).fill = fill_zerado
 
-    # Gráfico: horas extras por colaborador.
+  
     try:
         nome_col = list(df_export.columns).index("Nome") + 1
         he_col = list(df_export.columns).index("HE Período Min") + 1
@@ -2075,7 +1918,7 @@ def escrever_dashboard_banco_horas_he(writer, df_dashboard):
     except Exception as e:
         LOGGER.warning(f"Não foi possível criar gráfico de HE do dashboard: {e}")
 
-    # Gráfico: saldo atual do banco por colaborador.
+   
     try:
         saldo_col = list(df_export.columns).index("Variação Banco Min") + 1
         adicionar_grafico_coluna(
@@ -2181,12 +2024,11 @@ def exportar_excel_com_consultas(registros, caminho_saida, total_pdfs=0, total_e
     if not registros:
         raise ValueError("Nenhum registro foi extraído dos PDFs.")
 
-    # Base completa com todas as fotografias/PDFs para auditoria.
+  
     df_historico = preparar_dataframe_consultas(registros)
     df_historico = aplicar_validacoes(df_historico)
 
-    # Base operacional oficial: uma linha por colaborador + data, mantendo a
-    # fotografia mais recente por Data Emissão PDF.
+   
     df = consolidar_consolidado_oficial(df_historico)
 
     grupos_turno = defaultdict(list)
@@ -2224,16 +2066,13 @@ def exportar_excel_com_consultas(registros, caminho_saida, total_pdfs=0, total_e
         ajustar_largura_colunas(writer, "Consolidado", df_consolidado)
         aplicar_formatacao_colunas(writer, "Consolidado", df_consolidado)
 
-        # Aba de auditoria com todas as fotografias/PDFs, para rastrear mudanças
-        # entre emissões sem poluir a visão operacional.
+        
         df_consolidado_historico = ordenar_colunas_para_exportacao(df_historico)
         df_consolidado_historico.to_excel(writer, sheet_name="Consolidado Historico", index=False)
         ajustar_largura_colunas(writer, "Consolidado Historico", df_consolidado_historico)
         aplicar_formatacao_colunas(writer, "Consolidado Historico", df_consolidado_historico)
 
-        # Banco de Horas 2.0: opções de saldo inicial para escolha do gestor
-        # no Tempo Fechado. A aba é uma lista de candidatos, não uma decisão
-        # automática de saldo oficial.
+        
         df_saldos_bh = montar_saldos_disponiveis_bh(df_historico=df_historico, df_oficial=df)
         df_saldos_bh.to_excel(writer, sheet_name="Saldos Disponiveis BH", index=False)
         ajustar_largura_colunas(writer, "Saldos Disponiveis BH", df_saldos_bh)
