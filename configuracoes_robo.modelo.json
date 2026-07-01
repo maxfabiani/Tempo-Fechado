@@ -1,0 +1,14 @@
+{
+  "arquivo_excel_robo": "%USERPROFILE%\\ponto_pdfs\\saida\\resultado_lote_consultas_validado.xlsx",
+  "pasta_pdfs_robo": "%USERPROFILE%\\ponto_pdfs",
+  "script_launcher_robo": "Script_Launcher_v5_filtrado.py",
+  "auto_importar_excel_robo": true,
+  "corrigir_saldo_atual_por_pdf_ao_importar": false,
+  "max_pdfs_correcao_saldo": 1500,
+  "max_segundos_correcao_saldo": 180,
+  "capturar_emails_lidos": false,
+  "remetente_filtro": "fernanda.josino@engemon.com.br",
+  "assunto_filtro": "Análise de controle de marcações",
+  "observacao": "Copie este modelo para %USERPROFILE%\\ponto_pdfs\\config\\configuracoes_robo.json se quiser preconfigurar um notebook antes do primeiro uso. Ajuste os caminhos conforme o usuario local.",
+  "limite_emails_outlook": 500
+}
