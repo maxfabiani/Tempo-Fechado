@@ -3287,6 +3287,10 @@ def api_consolidado():
         "revisar": int((df["status"].str.upper() == "REVISAR").sum()) if not df.empty else 0,
     }
     dados_resp, meta_resp = _df_para_resposta_leve(df)
+    for r in dados_resp:
+        nome = str(r.get("nome", "") or "")
+        data = str(r.get("data", "") or "")
+        r["_anotacao_id"] = _gerar_anotacao_id(nome, data)
     return jsonify({"erro": "", "dados": dados_resp, "kpis": kpis, **meta_resp})
 
 
@@ -3426,6 +3430,10 @@ def api_ponto_em_aberto():
     df.drop(columns=["_qtd_batidas_oficial"], inplace=True, errors="ignore")
 
     dados_resp, meta_resp = _df_para_resposta_leve(df)
+    for r in dados_resp:
+        nome = str(r.get("nome", "") or "")
+        data = str(r.get("data", "") or "")
+        r["_anotacao_id"] = _gerar_anotacao_id(nome, data)
     return jsonify({
         "erro": "",
         "dados": dados_resp,
@@ -3459,6 +3467,10 @@ def api_ponto_aberto():
     df.drop(columns=["_qtd_batidas_web"], inplace=True, errors="ignore")
 
     dados_resp, meta_resp = _df_para_resposta_leve(df)
+    for r in dados_resp:
+        nome = str(r.get("nome", "") or "")
+        data = str(r.get("data", "") or "")
+        r["_anotacao_id"] = _gerar_anotacao_id(nome, data)
     return jsonify({
         "erro": "",
         "dados": dados_resp,
@@ -7790,6 +7802,17 @@ def api_violacoes_jornada():
         "excessos_semanais": int(excessos_semanais),
     }
 
+    for r in resultados:
+        nome = str(r.get("nome", "") or "")
+        data_ref = str(r.get("data_referencia", "") or "")
+        if "12x36" in str(r.get("tipo_jornada", "")):
+            r["_anotacao_id"] = _gerar_anotacao_id(nome, data_ref, "12x36")
+        elif "semana" in str(r.get("violacao", "")).lower():
+            periodo = str(r.get("periodo", "") or "")
+            r["_anotacao_id"] = _gerar_anotacao_id(nome, periodo, "excesso_semanal")
+        else:
+            r["_anotacao_id"] = _gerar_anotacao_id(nome, data_ref, "violacao")
+
     dados_resp = resultados[:LIMITE_LINHAS_RESPOSTA_TABELA]
     meta_resp = {"limitado": len(resultados) > LIMITE_LINHAS_RESPOSTA_TABELA, "total_sem_limite": len(resultados), "limite_linhas": LIMITE_LINHAS_RESPOSTA_TABELA}
     payload = {"erro": "", "dados": dados_resp, "kpis": kpis, **meta_resp}
@@ -7908,6 +7931,12 @@ def api_inter_jornada():
         "saldo_negativo": 0,
         "revisar": int(len(resultados)),
     }
+
+    for r in resultados:
+        nome = str(r.get("nome", "") or "")
+        data_ant = str(r.get("data_anterior", "") or "")
+        data_ret = str(r.get("data_retorno", "") or "")
+        r["_anotacao_id"] = _gerar_anotacao_id(nome, f"{data_ant}|{data_ret}", "interjornada")
 
     dados_resp = resultados[:LIMITE_LINHAS_RESPOSTA_TABELA]
     meta_resp = {"limitado": len(resultados) > LIMITE_LINHAS_RESPOSTA_TABELA, "total_sem_limite": len(resultados), "limite_linhas": LIMITE_LINHAS_RESPOSTA_TABELA}
