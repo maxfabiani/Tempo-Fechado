@@ -32,6 +32,12 @@ MANIFEST
 *.manifest
 *.spec
 
+# Installer output
+installer_output/
+
+# Assets (source icons)
+assets/
+
 # Installer logs
 pip-log.txt
 pip-delete-this-directory.txt
