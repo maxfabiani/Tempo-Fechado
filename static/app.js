@@ -748,6 +748,59 @@ function renderizarCardsPorGuia() {
   }
 }
 
+function _htmlAnotacaoBalloon(anotacaoId, temAnotacao) {
+  const cls = temAnotacao ? "has-text" : "no-text";
+  return `<span class="anotacao-balloon ${cls}" data-anotacao-id="${anotacaoId}" onclick="abrirEditorAnotacao(this)">💬</span>`;
+}
+
+function _appendBaloesAposRender(ids) {
+  const linhas = document.querySelectorAll("#tbody tr");
+  const cabecalho = document.querySelector("#tabelaConsolidado thead tr");
+  if (!cabecalho || !linhas.length) return;
+
+  if (!cabecalho.querySelector(".th-anotacao")) {
+    const th = document.createElement("th");
+    th.className = "th-anotacao";
+    th.textContent = "";
+    cabecalho.appendChild(th);
+  }
+
+  linhas.forEach((tr, i) => {
+    if (tr.classList.contains("anotacao-editor-row")) return;
+    const id = ids[i] || "";
+    const temAnotacao = !!window._anotacoesCache?.[id];
+    let td = tr.querySelector("td.td-anotacao");
+    if (!td) {
+      td = document.createElement("td");
+      td.className = "td-anotacao";
+      td.style.textAlign = "center";
+      tr.appendChild(td);
+    }
+    td.innerHTML = _htmlAnotacaoBalloon(id, temAnotacao);
+  });
+}
+
+async function _carregarAnotacoes(ids) {
+  if (!ids || !ids.length) return;
+  const val_ids = ids.filter(Boolean);
+  if (!val_ids.length) return;
+  try {
+    const resp = await fetch(`/api/anotacoes?ids=${encodeURIComponent(val_ids.join(","))}`);
+    const json = await resp.json();
+    window._anotacoesCache = window._anotacoesCache || {};
+    if (json.anotacoes) Object.assign(window._anotacoesCache, json.anotacoes);
+    document.querySelectorAll(".anotacao-balloon").forEach(el => {
+      const id = el.dataset.anotacaoId;
+      if (window._anotacoesCache?.[id]) {
+        el.classList.remove("no-text");
+        el.classList.add("has-text");
+      } else {
+        el.classList.remove("has-text");
+        el.classList.add("no-text");
+      }
+    });
+  } catch (_) {}
+}
 
 function setPaginaDashboard() {
   ocultarDashboardExecutivoPremium();
@@ -948,6 +1001,9 @@ async function carregarConsolidado() {
   }
 
   renderConsolidado();
+  const idsCons = (dadosConsolidadoAtual || []).map(r => r._anotacao_id);
+  _appendBaloesAposRender(idsCons);
+  _carregarAnotacoes(idsCons);
   if (json.limitado && qs("statusCarga")) {
     qs("statusCarga").textContent += ` Exibição limitada a ${json.limite_linhas} de ${json.total_sem_limite} registro(s). Use filtros para refinar.`;
   }
@@ -1067,6 +1123,9 @@ async function carregarInterJornada() {
     dadosConsolidadoAtual = json.dados || [];
     setCabecalhoInterJornada();
     renderInterJornada(dadosConsolidadoAtual);
+    const idsIJ = (dadosConsolidadoAtual || []).map(r => r._anotacao_id);
+    _appendBaloesAposRender(idsIJ);
+    _carregarAnotacoes(idsIJ);
     if (typeof renderizarCardsPorGuia === "function") renderizarCardsPorGuia();
   } catch (e) {
     if (qs("statusCarga")) qs("statusCarga").textContent = "Erro ao carregar Violações Inter Jornada: " + e.message;
@@ -1427,6 +1486,9 @@ async function carregarPontoEmAberto() {
   dadosConsolidadoAtual = json.dados || [];
   setCabecalhoSemMarcacaoCompacto();
   renderSemMarcacaoCompacta(dadosConsolidadoAtual);
+  const idsPontoAberto = (dadosConsolidadoAtual || []).map(r => r._anotacao_id);
+  _appendBaloesAposRender(idsPontoAberto);
+  _carregarAnotacoes(idsPontoAberto);
   renderizarCardsPorGuia();
 }
 
@@ -1513,6 +1575,9 @@ async function carregarPontoAberto() {
   dadosConsolidadoAtual = somenteImparesPontoAberto(json.dados || []);
   setCabecalhoPontoAbertoCompacto();
   renderPontoAbertoCompacto(dadosConsolidadoAtual);
+  const idsPontoAbertoImpar = (dadosConsolidadoAtual || []).map(r => r._anotacao_id);
+  _appendBaloesAposRender(idsPontoAbertoImpar);
+  _carregarAnotacoes(idsPontoAbertoImpar);
   renderizarCardsPorGuia();
 }
 
@@ -2355,6 +2420,9 @@ async function carregarViolacoesJornada() {
     dadosConsolidadoAtual = json.dados || [];
     setCabecalhoViolacoesJornada();
     renderViolacoesJornada(dadosConsolidadoAtual);
+    const idsVJ = (dadosConsolidadoAtual || []).map(r => r._anotacao_id);
+    _appendBaloesAposRender(idsVJ);
+    _carregarAnotacoes(idsVJ);
     if (typeof renderizarCardsPorGuia === "function") renderizarCardsPorGuia();
   } catch (e) {
     if (qs("statusCarga")) qs("statusCarga").textContent = "Erro ao carregar Violações de Jornada: " + e.message;
