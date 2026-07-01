@@ -2,6 +2,7 @@
 import csv
 import json
 import logging
+import os
 import re
 import shutil
 import sys
@@ -44,7 +45,7 @@ TOP_N_DIAS_HE = 15
 
 @dataclass(frozen=True)
 class Config:
-    pasta_raiz: Path = Path(r"C:\Users\max.guimaraes\ponto_pdfs")
+    pasta_raiz: Path = Path(os.environ.get("TEMPO_FECHADO_PASTA_RAIZ") or str(Path.home() / "ponto_pdfs"))
     pasta_entrada: Path = pasta_raiz / "entrada"
     pasta_processados: Path = pasta_raiz / "processados"
     pasta_erro: Path = pasta_raiz / "erro"
@@ -61,9 +62,7 @@ class Config:
 
     enviar_email_automaticamente: bool = ENVIAR_EMAIL
     exibir_email_antes_de_enviar: bool = EXIBIR_EMAIL_ANTES_DE_ENVIAR
-    destinatarios_email: tuple[str, ...] = (
-        "max.guimaraes@engemon.com.br",
-    )
+    destinatarios_email: tuple[str, ...] = ()
     cc_email: tuple[str, ...] = ()
     cco_email: tuple[str, ...] = ()
     assunto_email_base: str = "Arquivo consolidado"

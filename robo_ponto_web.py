@@ -68,7 +68,7 @@ def garantir_estrutura_ponto_pdfs_v81720():
 PASTA_PONTO_PDFS_AUTO = garantir_estrutura_ponto_pdfs_v81720()
 
 app = Flask(__name__)
-app.secret_key = "bbf4b37477c714f4df81447fcdfdc58e1be480cc0342885f"
+app.secret_key = os.environ.get("TEMPO_FECHADO_SECRET_KEY") or "bbf4b37477c714f4df81447fcdfdc58e1be480cc0342885f"
 app.config["SESSION_COOKIE_HTTPONLY"] = True
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 app.config["MAX_CONTENT_LENGTH"] = 250 * 1024 * 1024
@@ -356,7 +356,7 @@ def _config_robo_padrao():
         # False = captura apenas e-mails nao lidos; True = permite incluir lidos recentes.
         "capturar_emails_lidos": False,
         "limite_emails_outlook": 500,
-        "remetente_filtro": "fernanda.josino@engemon.com.br",
+        "remetente_filtro": os.environ.get("TEMPO_FECHADO_REMETENTE_FILTRO") or "",
         "assunto_filtro": "Análise de controle de marcações",
     }
 
@@ -2553,7 +2553,7 @@ JWT_EXP_SECONDS = int(os.environ.get("TEMPO_FECHADO_JWT_EXP_SECONDS", str(12 * 6
 
 
 def _jwt_secret():
-    return (os.environ.get("TEMPO_FECHADO_JWT_SECRET") or app.secret_key or "").encode("utf-8")
+    return (os.environ.get("TEMPO_FECHADO_JWT_SECRET") or app.secret_key).encode("utf-8")
 
 
 def _b64url_encode(data):
@@ -9809,7 +9809,7 @@ def _cfg_email_robo_v81727():
     cfg = {
         "enviar_email_automaticamente": True,
         "exibir_email_antes_de_enviar": True,
-        "destinatarios_email": ["max.guimaraes@engemon.com.br"],
+        "destinatarios_email": [],
         "cc_email": [],
         "cco_email": [],
         "assunto_email_base": "Arquivo consolidado",
@@ -9875,7 +9875,7 @@ def api_admin_config_robo_painel_v81728():
                 "arquivo_config_robo": str(ARQUIVO_CONFIG_ROBO),
             },
             "outlook": {
-                "remetente_filtro": str((cfg_robo or {}).get("remetente_filtro") or "fernanda.josino@engemon.com.br"),
+                "remetente_filtro": str((cfg_robo or {}).get("remetente_filtro") or os.environ.get("TEMPO_FECHADO_REMETENTE_FILTRO") or ""),
                 "assunto_filtro": str((cfg_robo or {}).get("assunto_filtro") or "Análise de controle de marcações"),
                 "capturar_emails_lidos": bool((cfg_robo or {}).get("capturar_emails_lidos", False)),
                 "limite_emails_outlook": _normalizar_limite_emails_outlook_v8216((cfg_robo or {}).get("limite_emails_outlook", 500)),
@@ -9901,7 +9901,7 @@ def api_admin_config_robo_painel_v81728():
         cfg_robo = salvar_config_robo({
             "capturar_emails_lidos": bool(robo_cfg_payload.get("capturar_emails_lidos", False)),
             "limite_emails_outlook": limite_emails_outlook,
-            "remetente_filtro": str(robo_cfg_payload.get("remetente_filtro") or "").strip() or "fernanda.josino@engemon.com.br",
+            "remetente_filtro": str(robo_cfg_payload.get("remetente_filtro") or os.environ.get("TEMPO_FECHADO_REMETENTE_FILTRO") or "").strip(),
             "assunto_filtro": str(robo_cfg_payload.get("assunto_filtro") or "").strip() or "Análise de controle de marcações",
         })
         politica = "inclui e-mails lidos recentes" if cfg_robo.get("capturar_emails_lidos") else "somente e-mails não lidos"

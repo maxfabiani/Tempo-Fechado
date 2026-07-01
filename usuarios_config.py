@@ -11,26 +11,22 @@ IMPORTANTE:
 - O campo "perfil" deve ser "admin" ou "consulta".
 """
 
+import os
+
 USUARIOS = {
     "admin": {
-        "senha": "admin123",
+        "senha": os.environ.get("TEMPO_FECHADO_ADMIN_PASSWORD") or "admin123",
         "nome": "Administrador",
         "perfil": "admin",
     },
     "max": {
-        "senha": "ponto123",
+        "senha": os.environ.get("TEMPO_FECHADO_MAX_PASSWORD") or "ponto123",
         "nome": "Max",
         "perfil": "admin",
     },
     "consulta": {
-        "senha": "consulta123",
+        "senha": os.environ.get("TEMPO_FECHADO_CONSULTA_PASSWORD") or "consulta123",
         "nome": "Usuário Consulta",
         "perfil": "consulta",
     },
-    # Exemplo para liberar um novo usuário somente consulta:
-    # "maria": {
-    #     "senha": "trocar123",
-    #     "nome": "Maria Silva",
-    #     "perfil": "consulta",
-    # },
 }

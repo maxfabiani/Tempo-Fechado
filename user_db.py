@@ -7,6 +7,7 @@ compatíveis com Werkzeug/Flask, via generate_password_hash e check_password_has
 
 from __future__ import annotations
 
+import os
 import sqlite3
 from datetime import datetime
 from pathlib import Path
@@ -16,10 +17,10 @@ from werkzeug.security import check_password_hash, generate_password_hash
 
 PERFIS_VALIDOS = {"admin", "consulta"}
 
-USUARIOS_PADRAO = {
-    "admin": {"senha": "admin123", "nome": "Administrador", "perfil": "admin", "trocar_senha": 1},
-    "max": {"senha": "ponto123", "nome": "Max", "perfil": "admin", "trocar_senha": 1},
-    "consulta": {"senha": "consulta123", "nome": "Usuário Consulta", "perfil": "consulta", "trocar_senha": 1},
+USUARIOS_PADRAO = {} if os.environ.get("TEMPO_FECHADO_SKIP_DEFAULT_USERS") else {
+    "admin": {"senha": os.environ.get("TEMPO_FECHADO_ADMIN_PASSWORD") or "admin123", "nome": "Administrador", "perfil": "admin", "trocar_senha": 1},
+    "max": {"senha": os.environ.get("TEMPO_FECHADO_MAX_PASSWORD") or "ponto123", "nome": "Max", "perfil": "admin", "trocar_senha": 1},
+    "consulta": {"senha": os.environ.get("TEMPO_FECHADO_CONSULTA_PASSWORD") or "consulta123", "nome": "Usuário Consulta", "perfil": "consulta", "trocar_senha": 1},
 }
 
 

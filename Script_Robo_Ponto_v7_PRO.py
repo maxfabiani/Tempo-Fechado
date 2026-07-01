@@ -61,9 +61,7 @@ class Config:
 
     enviar_email_automaticamente: bool = ENVIAR_EMAIL
     exibir_email_antes_de_enviar: bool = EXIBIR_EMAIL_ANTES_DE_ENVIAR
-    destinatarios_email: tuple[str, ...] = (
-        "max.guimaraes@engemon.com.br",
-    )
+    destinatarios_email: tuple[str, ...] = ()
     cc_email: tuple[str, ...] = ()
     cco_email: tuple[str, ...] = ()
     assunto_email_base: str = "Arquivo consolidado"
