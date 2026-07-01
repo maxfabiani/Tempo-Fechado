@@ -10,6 +10,7 @@ import shutil
 import re
 import json
 import hashlib
+import sqlite3
 import hmac
 import smtplib
 import urllib.request
@@ -2284,6 +2285,34 @@ def _df_para_resposta_leve(df, limite=LIMITE_LINHAS_RESPOSTA_TABELA):
     }
 
 
+def _init_anotacoes_db() -> sqlite3.Connection:
+    db_path = Path.home() / "ponto_pdfs" / "config" / "anotacoes.db"
+    db_path.parent.mkdir(parents=True, exist_ok=True)
+    conn = sqlite3.connect(str(db_path))
+    conn.row_factory = sqlite3.Row
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS anotacoes (
+            id              TEXT PRIMARY KEY,
+            nome            TEXT NOT NULL,
+            data_ref        TEXT NOT NULL DEFAULT '',
+            data_anterior   TEXT DEFAULT '',
+            data_retorno    TEXT DEFAULT '',
+            tipo_violacao   TEXT DEFAULT '',
+            anotacao        TEXT NOT NULL DEFAULT '',
+            usuario_criacao TEXT NOT NULL DEFAULT '',
+            criado_em       TEXT NOT NULL DEFAULT '',
+            atualizado_em   TEXT NOT NULL DEFAULT ''
+        )
+    """)
+    conn.commit()
+    return conn
+
+
+def _gerar_anotacao_id(nome: str, data_ref: str, tipo_violacao: str = "", extra: str = "") -> str:
+    chave = f"{nome}|{data_ref}|{tipo_violacao}|{extra}"
+    return hashlib.md5(chave.encode("utf-8")).hexdigest()[:16]
+
+
 def _normalizar_colunas_impl(df):
     """
     Normaliza o Consolidado preservando, quando existir, a diferença entre:
@@ -3140,6 +3169,62 @@ def aplicar_saldo_informado_pdf_no_espelho(df):
         except Exception:
             pass
         return df
+
+@app.route("/api/anotacoes")
+@login_obrigatorio
+def api_get_anotacoes():
+    ids_param = request.args.get("ids", "").strip()
+    conn = _init_anotacoes_db()
+    try:
+        if ids_param:
+            ids_lista = [i.strip() for i in ids_param.split(",") if i.strip()]
+            if not ids_lista:
+                return jsonify({"anotacoes": {}})
+            placeholders = ",".join("?" for _ in ids_lista)
+            rows = conn.execute(f"SELECT id, anotacao FROM anotacoes WHERE id IN ({placeholders})", ids_lista).fetchall()
+        else:
+            rows = conn.execute("SELECT id, anotacao FROM anotacoes").fetchall()
+        return jsonify({"anotacoes": {r["id"]: r["anotacao"] for r in rows}})
+    finally:
+        conn.close()
+
+
+@app.route("/api/anotacoes", methods=["POST"])
+@login_obrigatorio
+def api_post_anotacoes():
+    dados = request.get_json(silent=True) or {}
+    id_ = str(dados.get("id", "")).strip()
+    anotacao = str(dados.get("anotacao", "")).strip()
+    if not id_:
+        return jsonify({"erro": "ID obrigatório"}), 400
+
+    usuario = autenticar_requisicao_atual()[0].get("usuario", "")
+    agora = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    conn = _init_anotacoes_db()
+    try:
+        existente = conn.execute("SELECT * FROM anotacoes WHERE id = ?", (id_,)).fetchone()
+        if existente:
+            conn.execute("UPDATE anotacoes SET anotacao = ?, usuario_criacao = ?, atualizado_em = ? WHERE id = ?",
+                         (anotacao, usuario, agora, id_))
+        else:
+            conn.execute(
+                """INSERT INTO anotacoes (id, nome, data_ref, data_anterior, data_retorno, tipo_violacao,
+                   anotacao, usuario_criacao, criado_em, atualizado_em)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (id_,
+                 str(dados.get("nome", "")),
+                 str(dados.get("data_ref", "")),
+                 str(dados.get("data_anterior", "")),
+                 str(dados.get("data_retorno", "")),
+                 str(dados.get("tipo_violacao", "")),
+                 anotacao, usuario, agora, agora),
+            )
+        conn.commit()
+        return jsonify({"ok": True})
+    finally:
+        conn.close()
+
 
 @app.route("/api/consolidado")
 @login_obrigatorio
